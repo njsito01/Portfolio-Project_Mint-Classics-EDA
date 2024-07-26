@@ -142,17 +142,17 @@ However, I started with a temporary table to base a few calculations on:
 ``` sql
 CREATE TEMPORARY TABLE yearly_qty AS
 SELECT
-	EXTRACT(YEAR FROM os.orderDate) AS order_year,
-	pr.productLine AS product_line,
-	pr.productCode AS product_code,
-	pr.productName AS product_name,
-	pr.quantityInStock AS qty_in_stock,
-	SUM(od.quantityOrdered) AS qty_ordered
+  EXTRACT(YEAR FROM os.orderDate) AS order_year,
+  pr.productLine AS product_line,
+  pr.productCode AS product_code,
+  pr.productName AS product_name,
+  pr.quantityInStock AS qty_in_stock,
+  SUM(od.quantityOrdered) AS qty_ordered
 FROM mintclassics.orders AS os
 JOIN mintclassics.orderdetails AS od
-	ON os.orderNumber = od.orderNumber
+  ON os.orderNumber = od.orderNumber
 JOIN mintclassics.products AS pr
-	ON od.productCode = pr.productCode
+  ON od.productCode = pr.productCode
 GROUP BY order_year, product_line, product_code, qty_in_stock
 ORDER BY product_code, order_year
 ;
@@ -186,7 +186,17 @@ ORDER BY
 |Classic Cars|S12_1108|2001 Ferrari Enzo|442|3619|
 
 
-I then took that output and assigned categories based upon the average amount of units sold vs. how many are in stock, in order to get a clear picture of how well-stocked we are for each product.
+Next, I took that output and calculated the average number of units sold per year by product, found the percentage of the total inventory that comprises, and displayed the total inventory of each product. From that, I placed each unit into a category based on the amount of the total inventory a product's sales would comprise, in order to illustrate how much inventory there is per the demand.
+
+- **_High_** inventory level is anything where the average sold per year is less than 10% of the current total inventory
+	- It would take potentially 10 years or more before these products would sell out
+- **_Medium_** is anything where the average falls between 10% and 50% of the current total
+	- These could take 2 to 10 years to sell out of the current inventory
+- **_Low_** is between 50% and 100%
+	- These could be sold out within a year or two
+- **_Not enough on hand_** reflects any product where the current total inventory will not be sufficient to cover the average quantity sold per year
+
+With that, I took the number of products in each category and showed how many fell into each category.
 
 ``` sql
 WITH avg_qtys AS (
@@ -202,19 +212,32 @@ WITH avg_qtys AS (
   GROUP BY product_line, product_code, product_name, qty_in_stock
   ORDER BY
     avg_qty_ordered DESC
+), inv_levels AS (
+  SELECT
+    *,
+    CASE
+      WHEN pct_of_inventory < 10 THEN 'High'
+      WHEN pct_of_inventory BETWEEN 10 AND 50 THEN 'Medium'
+      WHEN pct_of_inventory BETWEEN 50 AND 100 THEN 'Low'
+      WHEN pct_of_inventory > 100 THEN 'Not enough on hand'
+    END AS inventory_level
+  FROM avg_qtys
 )
 SELECT
-  *,
-  CASE
-    WHEN pct_of_inventory < 10 THEN 'High'
-    WHEN pct_of_inventory BETWEEN 10 AND 50 THEN 'Medium'
-    WHEN pct_of_inventory BETWEEN 50 AND 100 THEN 'Low'
-    WHEN pct_of_inventory > 100 THEN 'Not enough on hand'
-  END AS inventory_level
-FROM avg_qtys
-;
+  inventory_level,
+  COUNT(*) AS occurrences
+FROM inv_levels
+GROUP BY inventory_level
 ```
 
+Which produced this result:
+
+|Inventory Level|Occurrences|
+|:---|:---:|
+|High|66|
+|Medium|33|
+|Low|6|
+|Not enough on hand|4|
 
 #### Question 3 - Are we storing items that are not moving? Are any items candidates for being dropped from the product line?
 
@@ -255,12 +278,8 @@ To answer this question, I made some distinctions between the current inventory 
 
 This does not indicate that these products were not in stock at the time, but merely gives insight into how much inventory is on hand for an individual product, based on prior years sales figures. The data would suggest that while the inventory counts for some products could be increased to more accurately line up with their demand, many products are well overstocked (for example, for any products in the 'High' category, it would take around 10 years to fully diminish the current inventory, without restocking).
 
-| Inventory Level | Occurrences |
-|:---|:---:|
-|High|222|
-|Approriate|66|
-|Low|26|
-|Not enough in stock to meet demand|13|
+
+
 
 
 
