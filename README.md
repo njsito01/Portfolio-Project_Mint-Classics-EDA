@@ -137,32 +137,40 @@ FROM storage_spaces
 
 In order to answer this question, I put together the average number of units sold per year, for each product.  I also included the total number of units in stock, in order to compare.
 
+However, I started with a temporary table to base a few calculations on:
+
 ``` sql
-WITH yearly_qty AS (
-  SELECT
-    EXTRACT(YEAR FROM os.orderDate) AS order_year,
-    pr.productLine AS product_line,
-    pr.productCode AS product_code,
-    pr.productName AS product_name,
-    pr.quantityInStock AS qty_in_stock,
-    SUM(od.quantityOrdered) AS qty_ordered
-  FROM mintclassics.orders AS os
-  JOIN mintclassics.orderdetails AS od
-    ON os.orderNumber = od.orderNumber
-  JOIN mintclassics.products AS pr
-    ON od.productCode = pr.productCode
-  GROUP BY order_year, product_line, product_code, qty_in_stock
-  ORDER BY product_code, order_year
-)
+CREATE TEMPORARY TABLE yearly_qty AS
+SELECT
+	EXTRACT(YEAR FROM os.orderDate) AS order_year,
+	pr.productLine AS product_line,
+	pr.productCode AS product_code,
+	pr.productName AS product_name,
+	pr.quantityInStock AS qty_in_stock,
+	SUM(od.quantityOrdered) AS qty_ordered
+FROM mintclassics.orders AS os
+JOIN mintclassics.orderdetails AS od
+	ON os.orderNumber = od.orderNumber
+JOIN mintclassics.products AS pr
+	ON od.productCode = pr.productCode
+GROUP BY order_year, product_line, product_code, qty_in_stock
+ORDER BY product_code, order_year
+;
+```
+
+Then I proceeded to find the average quantity ordered for each product each year, the percentage of total inventory the average volume sold makes up, and their respective quantities in stock. Additionally, I did not include the year 2005, as the dataset does not cover the entire year.
+
+``` sql
 SELECT
   product_line,
   product_code,
   product_name,
   ROUND(AVG(qty_ordered), 0) AS avg_qty_ordered,
+  ROUND((ROUND(AVG(qty_ordered), 0) / qty_in_stock) * 100, 2) AS pct_of_inventory,
   qty_in_stock
 FROM yearly_qty
 WHERE order_year <> 2005
-GROUP BY product_line, product_code, product_name
+GROUP BY product_line, product_code, product_name, qty_in_stock
 ORDER BY
   avg_qty_ordered DESC
 ;
@@ -177,6 +185,35 @@ ORDER BY
 |Vintage Cars|S18_1342|1937 Lincoln Berline|445|8693|
 |Classic Cars|S12_1108|2001 Ferrari Enzo|442|3619|
 
+
+I then took that output and assigned categories based upon the average amount of units sold vs. how many are in stock, in order to get a clear picture of how well-stocked we are for each product.
+
+``` sql
+WITH avg_qtys AS (
+  SELECT
+    product_line,
+    product_code,
+    product_name,
+    ROUND(AVG(qty_ordered), 0) AS avg_qty_ordered,
+    ROUND((ROUND(AVG(qty_ordered), 0) / qty_in_stock) * 100, 2) AS pct_of_inventory,
+    qty_in_stock
+  FROM yearly_qty
+  WHERE order_year <> 2005
+  GROUP BY product_line, product_code, product_name, qty_in_stock
+  ORDER BY
+    avg_qty_ordered DESC
+)
+SELECT
+  *,
+  CASE
+    WHEN pct_of_inventory < 10 THEN 'High'
+    WHEN pct_of_inventory BETWEEN 10 AND 50 THEN 'Medium'
+    WHEN pct_of_inventory BETWEEN 50 AND 100 THEN 'Low'
+    WHEN pct_of_inventory > 100 THEN 'Not enough on hand'
+  END AS inventory_level
+FROM avg_qtys
+;
+```
 
 
 #### Question 3 - Are we storing items that are not moving? Are any items candidates for being dropped from the product line?
@@ -199,8 +236,8 @@ ORDER BY total_ordered ASC
 LIMIT 20
 ;
 ```
-
-From there, I was able to identify a specific product that has not sold any units in the entire date range of the dataset:
+>[!NOTE]
+>From there, I was able to identify a specific product that has not sold any units in the entire date range of the dataset:
 
 |Warehouse Code|Product Code|Product Name|Qty In Stock|Total Ordered|
 |:---:|:---:|:---|:---:|:---:|
