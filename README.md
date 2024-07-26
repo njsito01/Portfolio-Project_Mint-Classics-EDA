@@ -37,7 +37,60 @@ From the provided dataset, I chose to focus my queries on 4 specific tables:
 - _warehouses_ - Houses information about the warehouses, including the warehouse name and the percent of capacity that is full
 
 ## Analysis
-Here, I will describe the steps I took to answer each of the questions, as well as showing the code that I used to do so
+
+#### Question 1 - Where are items stored and if they were rearranged, could a warehouse be eliminated?
+To answer the first question, I looked into the _warehouses_ and _products_ tables to determine where inventory was held, and after familiarizing myself with various information like _"What product lines are stored in which warehouse, and how many unique products are there?"_, I compiled results that broke down the inventory volumes of each warehouse by product line and product.
+
+``` SQL
+SELECT
+  wh.warehouseName AS warehouse_name,
+  wh.warehouseCode AS warehouse_code,
+  pr.productLine AS product_line,
+  pr.productCode AS product_code,
+  SUM(pr.quantityInStock) AS qty_in_stock
+FROM mintclassics.warehouses AS wh
+JOIN mintclassics.products AS pr
+	ON wh.warehouseCode = pr.warehouseCode
+GROUP BY warehouse_name, warehouse_code, product_line, product_code
+ORDER BY warehouse_code, product_line, product_code
+;
+```
+
+The next piece required to answer this was to estimate what the storage capacity actually is for each warehouse. I did this by aggregating the current total inventory in each warehouse and reverse-calculating that against the warehouse percent capacity to determine the estimated total capacity, as well as estimated open spaces.
+
+``` sql
+WITH storage_spaces AS (
+  SELECT
+    wh.warehouseCode AS warehouse_code,
+    wh.warehouseName AS warehouse_name,
+    SUM(pr.quantityInStock) AS qty_in_stock,
+    wh.warehousePctCap AS warehouse_pct_cap,
+    -- Performing a simpilfied calculation to find the estimated total capacity of each warehouse
+    ROUND(SUM(pr.quantityInStock) / (wh.warehousePctCap / 100), 0) AS est_total_capacity 
+  FROM mintclassics.warehouses AS wh
+  JOIN mintclassics.products AS pr
+    ON wh.warehouseCode = pr.warehouseCode
+  GROUP BY
+    warehouse_code,
+    warehouse_pct_cap
+)
+SELECT
+  *,
+  est_total_capacity - qty_in_stock AS est_open_spaces
+FROM storage_spaces
+;
+```
+Keeping in mind that there are other factors that can impact this calculation, such as packaging sizes, the above query yielded the following estimated results:
+
+
+|Warehouse Code|Warehouse Name|Quantity In Stock|Warehouse Percent Capacity| Est. Total Capacity|Est. Open Spaces|
+|:---:|:---:|:---:|:---:|:---:|:---:|
+|a|North|131688|72|182900|51212|
+|b|East|219183|67|327139|107956|
+|c|West|124880|50|249760|124880|
+|d|South|79380|75|105840|26460|
+
+
 
 ## Findings
 Here, I will show, using visualizations(?), what the data is suggesting
