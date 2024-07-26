@@ -56,10 +56,10 @@ ORDER BY warehouse_code, product_line, product_code
 ;
 ```
 
->Results here are limited in order to show the produced format:
+>_Results here are limited if only in order to show the produced format:_
 
 |Warehouse Name|Warehouse Code|Product Line|Product Code|Qty In Stock|
-|:---:|:---:|:---:|:---:|:---:|
+|:---|:---:|:---|:---:|:---:|
 |North|a|Motorcycles|S10_1678|7933|
 |North|a|Motorcycles|S10_2016|6625|
 |North|a|Motorcycles|S10_4698|5582|
@@ -89,7 +89,7 @@ ORDER BY
 >The query above produced these results:
 
 |Warehouse Name|Warehouse Code|Product Line|In Stock|
-|:---:|:---:|:---:|:---:|
+|:---|:---:|:---|:---:|
 |North|a|Motorcycles|69401|
 |North|a|Planes|62287|
 |East|b|Classic Cars|219183|
@@ -127,7 +127,7 @@ FROM storage_spaces
 >Keeping in mind that there are other factors that can impact this calculation, such as packaging sizes, the above query yielded the following estimated results:
 
 |Warehouse Code|Warehouse Name|Quantity In Stock|Warehouse Percent Capacity| Est. Total Capacity|Est. Open Spaces|
-|:---:|:---:|:---:|:---:|:---:|:---:|
+|:---:|:---|:---:|:---:|:---:|:---:|
 |a|North|131688|72|182900|51212|
 |b|East|219183|67|327139|107956|
 |c|West|124880|50|249760|124880|
@@ -135,9 +135,53 @@ FROM storage_spaces
 
 #### Question 2 - How are inventory numbers related to sales figures? Do the inventory counts seem appropriate for each item?
 
+In order to answer this question, I put together the average number of units sold per year, for each product.  I also included the total number of units in stock, in order to compare.
+
+``` sql
+WITH yearly_qty AS (
+  SELECT
+    EXTRACT(YEAR FROM os.orderDate) AS order_year,
+    pr.productLine AS product_line,
+    pr.productCode AS product_code,
+    pr.productName AS product_name,
+    pr.quantityInStock AS qty_in_stock,
+    SUM(od.quantityOrdered) AS qty_ordered
+  FROM mintclassics.orders AS os
+  JOIN mintclassics.orderdetails AS od
+    ON os.orderNumber = od.orderNumber
+  JOIN mintclassics.products AS pr
+    ON od.productCode = pr.productCode
+  GROUP BY order_year, product_line, product_code, qty_in_stock
+  ORDER BY product_code, order_year
+)
+SELECT
+  product_line,
+  product_code,
+  product_name,
+  ROUND(AVG(qty_ordered), 0) AS avg_qty_ordered,
+  qty_in_stock
+FROM yearly_qty
+WHERE order_year <> 2005
+GROUP BY product_line, product_code, product_name
+ORDER BY
+  avg_qty_ordered DESC
+;
+```
+> I've limited the results, here, in order to show the types of results produced:
+
+|product_line|product_code|product_name|avg_qty_ordered|qty_in_stock|
+|:---|:---:|:---|:---:|:---:|
+|Classic Cars|S18_3232|1992 Ferrari 360 Spider red|731|8347|
+|Planes|S18_1662|1980s Black Hawk Helicopter|448|5330|
+|Ships|S700_2610|The USS Constitution Ship|445|7083|
+|Vintage Cars|S18_1342|1937 Lincoln Berline|445|8693|
+|Classic Cars|S12_1108|2001 Ferrari Enzo|442|3619|
+
+
+
 #### Question 3 - Are we storing items that are not moving? Are any items candidates for being dropped from the product line?
 
-To answer this question, I looked to find the products with the lowest quantity sold:
+To answer this question, the first task is to identify which products have been ordered the least over the date range covered in the dataset:
 
 ``` sql
 SELECT
@@ -155,6 +199,12 @@ ORDER BY total_ordered ASC
 LIMIT 20
 ;
 ```
+
+From there, I was able to identify a specific product that has not sold any units in the entire date range of the dataset:
+
+|Warehouse Code|Product Code|Product Name|Qty In Stock|Total Ordered|
+|:---:|:---:|:---|:---:|:---:|
+|b|S18_3233|1985 Toyota Supra|7733|0|
 
 
 ## Findings
