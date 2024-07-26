@@ -30,7 +30,7 @@ For this project, I utilized the following tools:
 - Tableau Public: Visualization tool for producing informative graphs
 
 #### Tables
-From the provided dataset, I chose to focus my queries on 4 specific tables:
+From the provided dataset, I found these 4 tables to be the most relevant to answering the proposed questions:
 - _products_ - Houses information about individual products, including product codes and names, warehouse, stocking price
 - _orders_ - Contains information about the order fulfillment, such as order status, order date, and shipping date
 - _orderdetails_ - Contains information about the makeup of the orders, including quantities of sold items, purchase prices
@@ -56,6 +56,49 @@ ORDER BY warehouse_code, product_line, product_code
 ;
 ```
 
+>Results here are limited in order to show the produced format:
+
+|Warehouse Name|Warehouse Code|Product Line|Product Code|Qty In Stock|
+|:---:|:---:|:---:|:---:|:---:|
+|North|a|Motorcycles|S10_1678|7933|
+|North|a|Motorcycles|S10_2016|6625|
+|North|a|Motorcycles|S10_4698|5582|
+|North|a|Motorcycles|S12_2823|9997|
+|North|a|Motorcycles|S18_2625|4357|
+
+
+Additionally I narrowed down to determine which product lines are stored in which warehouse:
+
+``` sql
+SELECT
+  wh.warehouseName AS warehouse_name,
+  wh.warehouseCode AS warehouse_code,
+  pr.productLine AS product_line,
+  SUM(quantityInStock) AS in_stock    
+FROM mintclassics.products AS pr
+JOIN mintclassics.warehouses AS wh
+  ON pr.warehouseCode = wh.warehouseCode
+GROUP BY 
+  warehouse_code,
+  warehouse_name,
+  product_line
+ORDER BY
+  warehouse_code
+;
+```
+>The query above produced these results:
+
+|Warehouse Name|Warehouse Code|Product Line|In Stock|
+|:---:|:---:|:---:|:---:|
+|North|a|Motorcycles|69401|
+|North|a|Planes|62287|
+|East|b|Classic Cars|219183|
+|West|c|Vintage Cars|124880|
+|South|d|Ships|26833|
+|South|d|Trains|16696|
+|South|d|Trucks and Buses|35851|
+
+
 The next piece required to answer this was to estimate what the storage capacity actually is for each warehouse. I did this by aggregating the current total inventory in each warehouse and reverse-calculating that against the warehouse percent capacity to determine the estimated total capacity, as well as estimated open spaces.
 
 ``` sql
@@ -80,8 +123,8 @@ SELECT
 FROM storage_spaces
 ;
 ```
-Keeping in mind that there are other factors that can impact this calculation, such as packaging sizes, the above query yielded the following estimated results:
 
+>Keeping in mind that there are other factors that can impact this calculation, such as packaging sizes, the above query yielded the following estimated results:
 
 |Warehouse Code|Warehouse Name|Quantity In Stock|Warehouse Percent Capacity| Est. Total Capacity|Est. Open Spaces|
 |:---:|:---:|:---:|:---:|:---:|:---:|
