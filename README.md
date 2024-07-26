@@ -1,4 +1,4 @@
-# Portfolio Project - Mint Classics Company EDA
+# Portfolio Project - Exploratory Data Analysis for Mint Classics Company
 
 ## Introduction
 The presented project was to take the role of an entry-level data analyst, and perform an exploratory data analysis for the fictional Mint Classics Company. The goal of which is to
