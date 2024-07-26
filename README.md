@@ -137,6 +137,26 @@ FROM storage_spaces
 
 #### Question 3 - Are we storing items that are not moving? Are any items candidates for being dropped from the product line?
 
+To answer this question, I looked to find the products with the lowest quantity sold:
+
+``` sql
+SELECT
+  pr.productLine AS product_line,
+  pr.productCode AS product_code,
+  pr.productName AS product_name,
+  pr.quantityInStock AS in_stock,
+  IFNULL(SUM(od.quantityOrdered), 0) AS total_ordered,
+  pr.warehouseCode AS warehouse_code
+FROM mintclassics.products AS pr
+LEFT JOIN mintclassics.orderdetails AS od 
+  ON od.productCode = pr.productCode
+GROUP BY pr.productLine, pr.productCode, pr.productName, pr.warehouseCode, in_stock
+ORDER BY total_ordered ASC
+LIMIT 20
+;
+```
+
+
 ## Findings
 Here, I will show, using visualizations(?), what the data is suggesting
 
