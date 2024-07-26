@@ -90,7 +90,9 @@ Keeping in mind that there are other factors that can impact this calculation, s
 |c|West|124880|50|249760|124880|
 |d|South|79380|75|105840|26460|
 
+#### Question 2 - How are inventory numbers related to sales figures? Do the inventory counts seem appropriate for each item?
 
+#### Question 3 - Are we storing items that are not moving? Are any items candidates for being dropped from the product line?
 
 ## Findings
 Here, I will show, using visualizations(?), what the data is suggesting
