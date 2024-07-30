@@ -39,7 +39,7 @@ From the provided dataset, I found these 4 tables to be the most relevant to ans
 ## Analysis
 
 #### Question 1 - Where are items stored and if they were rearranged, could a warehouse be eliminated?
-To answer the first question, I looked into the _warehouses_ and _products_ tables to determine where inventory was held, and after familiarizing myself with various information like _"What product lines are stored in which warehouse, and how many unique products are there?"_, I compiled results that broke down the inventory volumes of each warehouse by product line and product.
+To answer the first question, I looked into the _warehouses_ and _products_ tables to determine where inventory was held, and started by familiarizing myself with various information like _"What product lines are stored in which warehouse, and how many unique products are there?"_. Below are the compiled results that breaks down the inventory volumes of each warehouse by product line and product.
 
 ``` SQL
 SELECT
@@ -124,7 +124,7 @@ FROM storage_spaces
 ;
 ```
 
->Keeping in mind that there are other factors that can impact this calculation, such as packaging sizes, the above query yielded the following estimated results:
+>Keeping in mind that there are other factors that can impact this calculation (such as packaging sizes), the above query yielded the following estimated results:
 
 |Warehouse Code|Warehouse Name|Quantity In Stock|Warehouse Percent Capacity| Est. Total Capacity|Est. Open Spaces|
 |:---:|:---|:---:|:---:|:---:|:---:|
@@ -158,7 +158,7 @@ ORDER BY product_code, order_year
 ;
 ```
 
-Then I proceeded to find the average quantity ordered for each product each year, the percentage of total inventory the average volume sold makes up, and their respective quantities in stock. Additionally, I did not include the year 2005, as the dataset does not cover the entire year.
+Then I proceeded to find the average quantity ordered for each product each year, and their respective quantities in stock. I did not include the year 2005, as the dataset does not cover the entirety of that year.
 
 ``` sql
 SELECT
@@ -186,7 +186,7 @@ ORDER BY
 |Classic Cars|S12_1108|2001 Ferrari Enzo|442|3619|
 
 
-Next, I took that output and calculated the average number of units sold per year by product, found the percentage of the total inventory that comprises, and displayed the total inventory of each product. From that, I placed each unit into a category based on the amount of the total inventory a product's sales would comprise, in order to illustrate how much inventory there is per the demand.
+Next, I took that output and found the percentage of the total inventory the average quantity ordered comprises. From that, I placed each unit into a category based on the amount of the total inventory a product's yearly average sales would comprise, in order to illustrate how much inventory there is per the demand.
 
 - **_High_** inventory level is anything where the average sold per year is less than 10% of the current total inventory
 	- It would take potentially 10 years or more before these products would sell out
@@ -268,22 +268,57 @@ LIMIT 20
 
 
 ## Findings
-Here, I will show, using visualizations(?), what the data is suggesting
 
 #### Question 1 - Where are items stored and if they were rearranged, could a warehouse be eliminated?
 
+The results below seem the most relevant to answering this question.  If the estimated number of open spaces is accurate, Warehouse D could be moved, potentially in its entirety, into either Warehouse B or C.  I would suggest performing more research to evaluate the amount of open space based on more applicable metrics (actual three-dimensional space required for each item, for example). However, even if the estimates are not entirely accurate, by splitting up the inventory held at Warehouse D by product line, the data would suggest that even without any other changes to inventory, the remaining warehouses have enough open space to facilitate reorganizing inventories and closing down Warehouse D.
+
+|Warehouse Name|Warehouse Code|Product Line|In Stock|
+|:---|:---:|:---|:---:|
+|North|a|Motorcycles|69401|
+|North|a|Planes|62287|
+|East|b|Classic Cars|219183|
+|West|c|Vintage Cars|124880|
+|South|d|Ships|26833|
+|South|d|Trains|16696|
+|South|d|Trucks and Buses|35851|
+
+|Warehouse Code|Warehouse Name|Quantity In Stock|Warehouse Percent Capacity| Est. Total Capacity|Est. Open Spaces|
+|:---:|:---|:---:|:---:|:---:|:---:|
+|a|North|131688|72|182900|51212|
+|b|East|219183|67|327139|107956|
+|c|West|124880|50|249760|124880|
+|d|South|79380|75|105840|26460|
+
 #### Question 2 - How are inventory numbers related to sales figures? Do the inventory counts seem appropriate for each item?
 
-To answer this question, I made some distinctions between the current inventory counts of individual products. An 'occurrence' is a single year for a unique product where the total quantity ordered for that year is of a certain percentage of the total current inventory of that product.  'High' would be a product-year where the total sold was less than 10% of the current inventory of that product. Any product-year between 10% and 30% would be 'Appropriate', between 30% and 100% would be 'Low', and anything where the product-year greater than the current total inventory is marked as 'Not enough in stock to meet demand'
+By calculating the yearly average number of units ordered for each product, and comparing it to the total number of each product in stock, the data suggests that we have several products that our inventory is not sufficient to serve.  However, we also have an overwhelming number of products that are highly stocked - to reiterate, the products listed as "High" are stocked in such volumes that would take potentially 10 years to sell all the way through their respective inventories, based on their yearly average volumes sold.
 
-This does not indicate that these products were not in stock at the time, but merely gives insight into how much inventory is on hand for an individual product, based on prior years sales figures. The data would suggest that while the inventory counts for some products could be increased to more accurately line up with their demand, many products are well overstocked (for example, for any products in the 'High' category, it would take around 10 years to fully diminish the current inventory, without restocking).
-
-
-
-
-
+|Inventory Level|Occurrences|
+|:---|:---:|
+|High|66|
+|Medium|33|
+|Low|6|
+|Not enough on hand|4|
 
 #### Question 3 - Are we storing items that are not moving? Are any items candidates for being dropped from the product line?
 
+We were able to find one product that has not sold any units during the entirety of the dataset's date range. This product has shown a lack of demand in the market, but is stocked at a similar volume to some of our top sellers.
+
+|Warehouse Code|Product Code|Product Name|Qty In Stock|Total Ordered|
+|:---:|:---:|:---|:---:|:---:|
+|b|S18_3233|1985 Toyota Supra|7733|0|
+
 ## Conclusions
-Here, I will provide my suggestions to resolve the business questions, as well as next steps, and potentially I'll include some further steps that could be taken, past the original questions
+
+The goal of this exploratory data analysis was to identify any patterns or themes in the data that might influence reorganizing or reducing the inventory at the Mint Classics Company facilities.
+
+Through this analysis, here are suggestions for next steps:
+
+- Perform an evaluation of Warehouses A, B and C, in order to determine a more accurate measure of their open storage space, and if it supports the estimates calculations performed in this analysis.
+- Ensure that the items that fall in the "Low" volume and "Not enough on hand" cateogories are re-stocked to volumes that are at the least, sufficient to keep up with their demand
+- For items in the "High"  category, consider re-aligning their volume counts to a level that reflects business objectives and demand, more effectively
+  - With re-alignment comes the possibility to again re-evaluate the required warehouse space, which could mean even more savings for the company if fewer warehouses are required
+- The data would suggest that product S18-3233, '1985 Toyota Supra' could be potentially eliminated from the product, or at least greatly reduced, due to its lack of any sales over the course of multiple years.
+
+Thank you
