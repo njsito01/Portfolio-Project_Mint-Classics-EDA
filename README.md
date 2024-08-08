@@ -177,7 +177,7 @@ ORDER BY
 ```
 > I've limited the results, here, in order to show the types of results produced:
 
-|product_line|product_code|product_name|avg_qty_ordered|qty_in_stock|
+|Product Line|Product Code|Product Name|Average Quantity Ordered|Qty In Stock|
 |:---|:---:|:---|:---:|:---:|
 |Classic Cars|S18_3232|1992 Ferrari 360 Spider red|731|8347|
 |Planes|S18_1662|1980s Black Hawk Helicopter|448|5330|
@@ -273,7 +273,7 @@ LIMIT 20
 
 The results below seem the most relevant to answering this question.  If the estimated number of open spaces is accurate, Warehouse D could be moved, potentially in its entirety, into either Warehouse B or C.  I would suggest performing more research to evaluate the amount of open space based on more applicable metrics (actual three-dimensional space required for each item, for example). However, even if the estimates are not entirely accurate, by splitting up the inventory held at Warehouse D by product line, the data would suggest that even without any other changes to inventory, the remaining warehouses have enough open space to facilitate reorganizing inventories and closing down Warehouse D.
 
-|Warehouse Name|Warehouse Code|Product Line|In Stock|
+|Warehouse Name|Warehouse Code|Product Line|Qty In Stock|
 |:---|:---:|:---|:---:|
 |North|a|Motorcycles|69401|
 |North|a|Planes|62287|
@@ -313,9 +313,9 @@ We were able to find one product that has not sold any units during the entirety
 
 The goal of this exploratory data analysis was to identify any patterns or themes in the data that might influence reorganizing or reducing the inventory at the Mint Classics Company facilities.
 
-Through this analysis, here are suggestions for next steps:
+Through this analysis, I have come up with the following suggestions for next steps:
 
-- Perform an evaluation of Warehouses A, B and C, in order to determine a more accurate measure of their open storage space, and if it supports the estimates calculations performed in this analysis.
+- Perform an evaluation of Warehouses A, B and C, in order to determine a more accurate measure of their open storage space, and if the that aligns with the estimated calculations performed in this analysis.
 - Ensure that the items that fall in the "Low" volume and "Not enough on hand" cateogories are re-stocked to volumes that are at the least, sufficient to keep up with their demand
 - For items in the "High"  category, consider re-aligning their volume counts to a level that reflects business objectives and demand, more effectively
   - With re-alignment comes the possibility to again re-evaluate the required warehouse space, which could mean even more savings for the company if fewer warehouses are required
