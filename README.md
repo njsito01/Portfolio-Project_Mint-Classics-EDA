@@ -270,7 +270,7 @@ LIMIT 20
 
 #### Question 1 - Where are items stored and if they were rearranged, could a warehouse be eliminated?
 
-The results below seem the most relevant to answering this question.  If the estimated number of open spaces is accurate, Warehouse D could be moved, potentially in its entirety, into either Warehouse B or C.  I would suggest performing more research to evaluate the amount of open space based on more applicable metrics (actual three-dimensional space required for each item, for example). However, even if the estimates are not entirely accurate, by splitting up the inventory held at Warehouse D by product line, the data would suggest that even without any other changes to inventory, the remaining warehouses have enough open space to facilitate reorganizing inventories and closing down Warehouse D.
+The results below seem the most relevant to answering this question.  If the estimated number of open spaces is accurate, the contents of Warehouse D could be moved, potentially in its entirety, into either Warehouse B or C.  I would suggest performing more research to evaluate the amount of open space based on more applicable metrics (actual three-dimensional space required for each item, for example). However, even if the estimates are not entirely accurate, by splitting up the inventory held at Warehouse D by product line, the data would suggest that even without any other changes to inventory, the remaining warehouses have enough open space to facilitate reorganizing inventories and closing down Warehouse D.
 
 |Warehouse Name|Warehouse Code|Product Line|Qty In Stock|
 |:---|:---:|:---|:---:|
