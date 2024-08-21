@@ -27,7 +27,6 @@ For this project, I utilized the following tools:
 - SQL: The language of the code written
 - MySQL Workbench: The environment I interacted with and queried the database from
 - MySQL Server: The database where the dataset was stored
-- Tableau Public: Visualization tool for producing informative graphs
 
 #### Tables
 From the provided dataset, I found these 4 tables to be the most relevant to answering the proposed questions:
