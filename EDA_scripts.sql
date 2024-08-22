@@ -53,7 +53,7 @@ ORDER BY orderDate
 
 -- Examining total volumes of products in stock
 SELECT
-	productLine,
+    productLine,
     productCode,
     productName,
     quantityInStock
