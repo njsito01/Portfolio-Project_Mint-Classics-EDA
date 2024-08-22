@@ -44,7 +44,7 @@ and least sold products, etc.
 
 -- Examining the date range of orders
 SELECT
-	MIN(orderDate) AS min_date,
+    MIN(orderDate) AS min_date,
     MAX(orderDate) AS max_date
 FROM mintclassics.orders
 ORDER BY orderDate
