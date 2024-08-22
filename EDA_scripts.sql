@@ -65,11 +65,11 @@ ORDER BY productLine, productCode
 
 WITH quantities_ordered AS (
 	SELECT
-		pr.productLine AS product_line,
-		pr.productName AS product_name,
-		SUM(od.quantityOrdered) AS total_ordered,
+	    pr.productLine AS product_line,
+	    pr.productName AS product_name,
+	    SUM(od.quantityOrdered) AS total_ordered,
         pr.quantityInStock AS quantity_in_stock,
-		pr.warehouseCode AS warehouse_code
+	    pr.warehouseCode AS warehouse_code
 	FROM mintclassics.products AS pr
 	LEFT JOIN mintclassics.orderdetails AS od 
 		ON od.productCode = pr.productCode
@@ -77,8 +77,8 @@ WITH quantities_ordered AS (
 	ORDER BY pr.warehouseCode, total_ordered DESC
 )
 SELECT
-	warehouse_code,
-	product_name,
+    warehouse_code,
+    product_name,
     total_ordered,
     quantity_in_stock
 FROM quantities_ordered
