@@ -40,6 +40,8 @@ From the provided dataset, I found these 4 tables to be the most relevant to ans
 #### Question 1 - Where are items stored and if they were rearranged, could a warehouse be eliminated?
 To answer the first question, I looked into the _warehouses_ and _products_ tables to determine where inventory was held, and started by familiarizing myself with various information like _"What product lines are stored in which warehouse, and how many unique products are there?"_. Below are the compiled results that breaks down the inventory volumes of each warehouse by product line and product.
 
+<details>
+	<summary><sub>Expand SQL</sub></summary>
 ``` SQL
 SELECT
   wh.warehouseName AS warehouse_name,
@@ -54,6 +56,7 @@ GROUP BY warehouse_name, warehouse_code, product_line, product_code
 ORDER BY warehouse_code, product_line, product_code
 ;
 ```
+</details>
 
 >_Results here are limited if only in order to show the produced format:_
 
@@ -67,6 +70,9 @@ ORDER BY warehouse_code, product_line, product_code
 
 
 Additionally I narrowed down to determine which product lines are stored in which warehouse:
+
+<details>
+	<summary><sub>Expand SQL</sub></summary>
 
 ``` sql
 SELECT
@@ -85,7 +91,9 @@ ORDER BY
   warehouse_code
 ;
 ```
->The query above produced these results:
+</details>
+
+>_The query above produced these results:_
 
 |Warehouse Name|Warehouse Code|Product Line|In Stock|
 |:---|:---:|:---|:---:|
@@ -100,6 +108,10 @@ ORDER BY
 
 The next piece required to answer this was to estimate what the storage capacity actually is for each warehouse. I did this by aggregating the current total inventory in each warehouse and reverse-calculating that against the warehouse percent capacity to determine the estimated total capacity, as well as estimated open spaces.
 
+
+<details>
+	<summary><sub>Expand SQL</sub></summary>
+	
 ``` sql
 WITH storage_spaces AS (
   SELECT
@@ -122,8 +134,9 @@ SELECT
 FROM storage_spaces
 ;
 ```
+</details>
 
->Keeping in mind that there are other factors that can impact this calculation (such as packaging sizes), the above query yielded the following estimated results:
+>_Keeping in mind that there are other factors that can impact this calculation (such as packaging sizes), the above query yielded the following estimated results:_
 
 |Warehouse Code|Warehouse Name|Quantity In Stock|Warehouse Percent Capacity| Est. Total Capacity|Est. Open Spaces|
 |:---:|:---|:---:|:---:|:---:|:---:|
@@ -138,6 +151,10 @@ In order to answer this question, I put together the average number of units sol
 
 However, I started with a temporary table to base a few calculations on:
 
+
+<details>
+	<summary><sub>Expand SQL</sub></summary>
+	
 ``` sql
 CREATE TEMPORARY TABLE yearly_qty AS
 SELECT
@@ -156,9 +173,14 @@ GROUP BY order_year, product_line, product_code, qty_in_stock
 ORDER BY product_code, order_year
 ;
 ```
+</details>
 
 Then I proceeded to find the average quantity ordered for each product each year, and their respective quantities in stock. I did not include the year 2005, as the dataset does not cover the entirety of that year.
 
+
+<details>
+	<summary><sub>Expand SQL</sub></summary>
+	
 ``` sql
 SELECT
   product_line,
@@ -174,7 +196,9 @@ ORDER BY
   avg_qty_ordered DESC
 ;
 ```
-> I've limited the results, here, in order to show the types of results produced:
+</details>
+
+>_I've limited the results, here, in order to show the types of results produced:_
 
 |Product Line|Product Code|Product Name|Average Quantity Ordered|Qty In Stock|
 |:---|:---:|:---|:---:|:---:|
@@ -197,6 +221,10 @@ Next, I took that output and found the percentage of the total inventory the ave
 
 With that, I took the number of products in each category and showed how many fell into each category.
 
+
+<details>
+	<summary><sub>Expand SQL</sub></summary>
+	
 ``` sql
 WITH avg_qtys AS (
   SELECT
@@ -228,6 +256,7 @@ SELECT
 FROM inv_levels
 GROUP BY inventory_level
 ```
+</details>
 
 Which produced this result:
 
@@ -242,6 +271,10 @@ Which produced this result:
 
 To answer this question, the first task is to identify which products have been ordered the least over the date range covered in the dataset:
 
+
+<details>
+	<summary><sub>Expand SQL</sub></summary>
+	
 ``` sql
 SELECT
   pr.productLine AS product_line,
@@ -258,8 +291,10 @@ ORDER BY total_ordered ASC
 LIMIT 20
 ;
 ```
+</details>
+
 >[!NOTE]
->From there, I was able to identify a specific product that has not sold any units in the entire date range of the dataset:
+>_From there, I was able to identify a specific product that has not sold any units in the entire date range of the dataset:_
 
 |Warehouse Code|Product Code|Product Name|Qty In Stock|Total Ordered|
 |:---:|:---:|:---|:---:|:---:|
