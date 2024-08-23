@@ -44,7 +44,7 @@ and least sold products, etc.
 
 -- Examining the date range of orders
 SELECT
-    MIN(orderDate) AS min_date,
+	MIN(orderDate) AS min_date,
     MAX(orderDate) AS max_date
 FROM mintclassics.orders
 ORDER BY orderDate
@@ -53,7 +53,7 @@ ORDER BY orderDate
 
 -- Examining total volumes of products in stock
 SELECT
-    productLine,
+	productLine,
     productCode,
     productName,
     quantityInStock
@@ -65,11 +65,11 @@ ORDER BY productLine, productCode
 
 WITH quantities_ordered AS (
 	SELECT
-	    pr.productLine AS product_line,
-	    pr.productName AS product_name,
-	    SUM(od.quantityOrdered) AS total_ordered,
+		pr.productLine AS product_line,
+		pr.productName AS product_name,
+		SUM(od.quantityOrdered) AS total_ordered,
         pr.quantityInStock AS quantity_in_stock,
-	    pr.warehouseCode AS warehouse_code
+		pr.warehouseCode AS warehouse_code
 	FROM mintclassics.products AS pr
 	LEFT JOIN mintclassics.orderdetails AS od 
 		ON od.productCode = pr.productCode
@@ -77,8 +77,8 @@ WITH quantities_ordered AS (
 	ORDER BY pr.warehouseCode, total_ordered DESC
 )
 SELECT
-    warehouse_code,
-    product_name,
+	warehouse_code,
+	product_name,
     total_ordered,
     quantity_in_stock
 FROM quantities_ordered
@@ -347,41 +347,110 @@ ORDER BY warehouse_code, order_year, order_month, product_line, product_code
 This section is focused on looking for any relationship between sales and inventory volume
 */
 
-WITH sales_volumes AS (
+
+
+-- Determining the yearly ordered amount of each product, excluding 2005 as the dataset only covers part of 2005
+
+CREATE TEMPORARY TABLE yearly_qty AS
+SELECT
+	EXTRACT(YEAR FROM os.orderDate) AS order_year,
+	pr.productLine AS product_line,
+	pr.productCode AS product_code,
+	pr.productName AS product_name,
+	pr.quantityInStock AS qty_in_stock,
+	SUM(od.quantityOrdered) AS qty_ordered
+FROM mintclassics.orders AS os
+JOIN mintclassics.orderdetails AS od
+	ON os.orderNumber = od.orderNumber
+JOIN mintclassics.products AS pr
+	ON od.productCode = pr.productCode
+GROUP BY order_year, product_line, product_code, qty_in_stock
+ORDER BY product_code, order_year
+;
+
+
+WITH avg_qtys AS (
 	SELECT
-		pr.productCode,
-		SUM(od.quantityOrdered) AS volume_ordered,
-		pr.quantityInStock AS quantity_in_stock,
-		pr.quantityInStock - SUM(od.quantityOrdered) AS difference,
-		ROUND((SUM(od.quantityOrdered) / pr.quantityInStock) * 100, 2) AS pct_of_stock_sold
-	FROM mintclassics.products AS pr
-	LEFT JOIN mintclassics.orderdetails AS od
-		ON pr.productCode = od.productCode
-	GROUP BY
-		pr.productCode
+		product_line,
+		product_code,
+		product_name,
+		ROUND(AVG(qty_ordered), 0) AS avg_qty_ordered,
+        ROUND((ROUND(AVG(qty_ordered), 0) / qty_in_stock) * 100, 2) AS pct_of_inventory,
+		qty_in_stock
+	FROM yearly_qty
+	WHERE order_year <> 2005
+	GROUP BY product_line, product_code, product_name, qty_in_stock
 	ORDER BY
-		pr.productCode
+		avg_qty_ordered DESC
 )
 SELECT
 	*,
     CASE
-		WHEN pct_of_stock_sold < 20 THEN 'Very High Inventory'
-        WHEN pct_of_stock_sold BETWEEN 20 AND 40 THEN 'High Inventory'
-        WHEN pct_of_stock_sold BETWEEN 40 AND 70 THEN 'Appropriate Inventory'
-        WHEN pct_of_stock_sold BETWEEN 70 AND 100 THEN 'Low Inventory'
-        WHEN pct_of_stock_sold > 100 THEN 'More orders than in Inventory'
-	END AS inventory_level,
-    volume_ordered * 2 AS suggested_volume,
-    ROUND(AVG((volume_ordered / ROUND(quantity_in_stock * 0.95) * 100)) OVER(), 2) AS avg_pct_of_stock_sold,
-    pct_of_stock_sold - ROUND(AVG((volume_ordered / ROUND(quantity_in_stock * 0.95) * 100)) OVER(), 2) AS dev_from_average_stock_pct,
-    ROUND(quantity_in_stock * 0.95, 0) AS adj_in_stock, -- Also seeing how removing inventory would affect this
-    ROUND(volume_ordered / ROUND(quantity_in_stock * 0.95, 0) * 100, 2) AS adj_pct_of_stock,
-    DENSE_RANK() OVER(ORDER BY volume_ordered DESC) AS ranking
-FROM sales_volumes
-WHERE volume_ordered IS NOT NULL -- Not including products that sold more than are in stock, or that haven't sold at all, as they are addressed separately
-ORDER BY ranking
+		WHEN pct_of_inventory < 10 THEN 'High'
+        WHEN pct_of_inventory BETWEEN 10 AND 50 THEN 'Medium'
+        WHEN pct_of_inventory BETWEEN 50 AND 100 THEN 'Low'
+        WHEN pct_of_inventory > 100 THEN 'Not enough on hand'
+	END AS inventory_level
+FROM avg_qtys
 ;
 
+
+-- Taking the above query and finding the counts of each inventory level
+WITH avg_qtys AS (
+	SELECT
+		product_line,
+		product_code,
+		product_name,
+		ROUND(AVG(qty_ordered), 0) AS avg_qty_ordered,
+        ROUND((ROUND(AVG(qty_ordered), 0) / qty_in_stock) * 100, 2) AS pct_of_inventory,
+		qty_in_stock
+	FROM yearly_qty
+	WHERE order_year <> 2005
+	GROUP BY product_line, product_code, product_name, qty_in_stock
+	ORDER BY
+		avg_qty_ordered DESC
+), inv_levels AS (
+	SELECT
+		*,
+		CASE
+			WHEN pct_of_inventory < 10 THEN 'High'
+			WHEN pct_of_inventory BETWEEN 10 AND 50 THEN 'Medium'
+			WHEN pct_of_inventory BETWEEN 50 AND 100 THEN 'Low'
+			WHEN pct_of_inventory > 100 THEN 'Not enough on hand'
+		END AS inventory_level
+	FROM avg_qtys
+)
+SELECT
+	inventory_level,
+    COUNT(*) AS occurrences
+FROM inv_levels
+GROUP BY inventory_level
+;
+
+-- Looking for a yearly average for a suggested in stock count
+WITH yearly_qtys AS (
+	SELECT
+		EXTRACT(YEAR FROM os.orderDate) AS order_year,
+		pr.productCode AS product_code,
+		SUM(od.quantityOrdered) AS qty_ordered
+	FROM mintclassics.orders AS os
+	JOIN mintclassics.orderdetails AS od
+		ON os.orderNumber = od.orderNumber
+	JOIN mintclassics.products AS pr
+		ON od.productCode = pr.productCode
+	GROUP BY order_year, product_code
+	ORDER BY product_code, order_year
+)
+SELECT 
+	product_code,
+	ROUND(AVG(qty_ordered), 0) AS avg_qty_ordered,
+    ROUND(AVG(qty_ordered), 0) * 3 AS x3_suggested_qty_in_stock,
+    ROUND(AVG(qty_ordered), 0) * 5 AS x5_suggested_qty_in_stock
+FROM yearly_qtys
+WHERE order_year <> 2005
+GROUP BY
+	product_code
+;
 
 -- "What-if?" Looking at number of products not in stock if overall on-hand quantity is reduced by 5%
 -- Which ordered items are then not fully in stock?
