@@ -209,7 +209,7 @@ ORDER BY
 |Classic Cars|S12_1108|2001 Ferrari Enzo|442|3619|
 
 
-Next, I took that output and found the percentage of the total inventory the average quantity ordered comprises. From that, I placed each unit into a category based on the amount of the total inventory a product's yearly average sales would comprise, in order to illustrate how much inventory there is per the demand.
+Next, I took that output and found the percentage of the total inventory the average quantity ordered comprises. From that, I placed each unit into a category based on the amount of the total inventory a product's yearly average sales would comprise, in order to illustrate how much inventory there is compared to the demand.
 
 - **_High_** inventory level is anything where the average sold per year is less than 10% of the current total inventory
 	- It would take potentially 10 years or more before these products would sell out
