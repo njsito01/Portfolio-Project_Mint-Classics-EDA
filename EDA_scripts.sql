@@ -380,8 +380,7 @@ WITH avg_qtys AS (
 	FROM yearly_qty
 	WHERE order_year <> 2005
 	GROUP BY product_line, product_code, product_name, qty_in_stock
-	ORDER BY
-		avg_qty_ordered DESC
+	ORDER BY avg_qty_ordered DESC
 )
 SELECT
 	*,
@@ -407,8 +406,7 @@ WITH avg_qtys AS (
 	FROM yearly_qty
 	WHERE order_year <> 2005
 	GROUP BY product_line, product_code, product_name, qty_in_stock
-	ORDER BY
-		avg_qty_ordered DESC
+	ORDER BY avg_qty_ordered DESC
 ), inv_levels AS (
 	SELECT
 		*,
