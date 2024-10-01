@@ -42,6 +42,7 @@ To answer the first question, I looked into the _warehouses_ and _products_ tabl
 
 <details>
 	<summary><sub>Expand SQL</sub></summary>
+
 ``` SQL
 SELECT
   wh.warehouseName AS warehouse_name,
@@ -56,6 +57,8 @@ GROUP BY warehouse_name, warehouse_code, product_line, product_code
 ORDER BY warehouse_code, product_line, product_code
 ;
 ```
+
+
 </details>
 
 >_Results here are limited if only in order to show the produced format:_
