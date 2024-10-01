@@ -350,7 +350,7 @@ The goal of this exploratory data analysis was to identify any patterns or theme
 Through this analysis, I have come up with the following suggestions for next steps:
 
 - Perform an evaluation of Warehouses A, B and C, in order to determine a more accurate measure of their open storage space, and if the that aligns with the estimated calculations performed in this analysis.
-- Ensure that the items that fall in the "Low" volume and "Not enough on hand" cateogories are re-stocked to volumes that are at the least, sufficient to keep up with their demand
+- Ensure that the items that fall in the "Low" volume and "Not enough on hand" categories are re-stocked to volumes that are at the least, sufficient to keep up with their demand
 - For items in the "High"  category, consider re-aligning their volume counts to a level that reflects business objectives and demand, more effectively
   - With re-alignment comes the possibility to again re-evaluate the required warehouse space, which could mean even more savings for the company if fewer warehouses are required
 - The data would suggest that product S18-3233, '1985 Toyota Supra' could be potentially eliminated from the product, or at least greatly reduced, due to its lack of any sales over the course of multiple years.
